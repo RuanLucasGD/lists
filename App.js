@@ -4,95 +4,55 @@ import { Button, FlatList } from 'react-native-web';
 import { Image } from 'react-native'
 import { useEffect } from 'react'
 
-function requestApiData(api, onGetRequestData) {
-
-  const request = new XMLHttpRequest();
-
-  request.open('GET', api, true);
-
-  request.onload = () => {
-
-    const data = JSON.parse(request.response);
-    if (onGetRequestData) {
-      onGetRequestData(data);
-    }
-  }
-
-  request.send();
-}
-
-function openPerfil() {
-  console.log("bla")
-}
+const perfilApi = `https://api.github.com/users/RuanLucasGD`;
+const repoApi = `https://api.github.com/users/RuanLucasGD/repos`;
 
 export default function App() {
+  const [userData, setUserData] = useState({ avatar_url: '', name: '', bio: '' })
 
-  const perfilApi = `https://api.github.com/users/RuanLucasGD`;
-  const repoApi = `https://api.github.com/users/RuanLucasGD/repos`;
+  function requestApiData(api, onGetRequestData) {
+    const request = new XMLHttpRequest();
 
-  var emptyWindow = (
-    <View style={styles.container}>
-      <Text style={styles.item}> bla </Text>
-    </View>
-  );
+    request.onload = () => {
+      const data = JSON.parse(request.response);
+      if (onGetRequestData) {
+        onGetRequestData(data);
+      }
+    }
+    request.open('GET', api, true);
+    request.send();
+  }
 
-  const [appWindow, setAppWindow] = useState(emptyWindow);
-  const [userDataFinded, setUserDataFinded] = useState(false);
-  const [repoDataFinded, setRepoDataFinded] = useState(false);
-  let userData = {};
-  let repoData = {};
-  const [allDataFinded, setAllDataFinded] = useState(false)
+  function openPerfil() {
+    requestApiData(perfilApi, (data) => {
+      const new_d = { avatar_url: data.avatar_url, name: data.name, bio: data.bio };
+      setUserData(new_d);
+    })
+  }
 
-  const checkIfAllDataIsFinded = () => { return userDataFinded && repoDataFinded; }
+  useEffect(() => {
+    openPerfil();  
+  });
 
-  const drawFullWindow = () => {
-
-    setAppWindow((
+  /*if (!userData.name) {
+    return (
+      <View style={styles.container}>
+        <Button title="Open perfil" onPress={openPerfil} color="#ee9b00"></Button>
+      </View>
+    );
+  } else {*/
+    return (
       < View style={styles.container} >
         <View style={styles.Center}>
           <Image style={styles.AvatarImg} source={{ uri: userData.avatar_url }} />
-          <Text style={styles.Name}> {userData.name} </Text>
+          <Text key={userData.name} style={styles.Name}> {userData.name} </Text>
           <Text style={styles.Bio}> {userData.bio} </Text>
-          <Text>Hello</Text>
         </View>
         <View style={styles.container}>
         </View>
-        <Button title="Open perfil" onPress={openPerfil} color="#ee9b00"></Button>
       </View >
-    ))
-  }
-
-  requestApiData(perfilApi, (data) => {
-
-    if (!userDataFinded) {
-      userData = data;
-      setUserDataFinded(true)
-    }
-  })
-
-  requestApiData(repoApi, (data) => {
-
-    if (!repoDataFinded) {
-      setRepoDataFinded(true)
-      repoData = data;
-    }
-  })
-
-
-  useEffect(() => {
-
-    if (!allDataFinded) {
-
-
-      if (checkIfAllDataIsFinded()) {
-        drawFullWindow()
-        setAllDataFinded(true)
-        console.log(repoData) 
-      }
-    }
-  })
-
-  return appWindow;
+    );
+  //}
 }
 
 const styles = StyleSheet.create({
