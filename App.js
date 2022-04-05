@@ -10,6 +10,30 @@ const repoApi = `https://api.github.com/users/RuanLucasGD/repos`;
 export default function App() {
   const [userData, setUserData] = useState({ avatar_url: '', name: '', bio: '' })
 
+  function requestApiDataPromise(uri) {
+    return new Promise(function (resolve, reject) {
+      const request = new XMLHttpRequest();
+      request.onload = () => {
+        if (request.status >= 200 && request.status < 300) {
+          resolve(request.response);
+        } else {
+          reject({
+            status: request.status,
+            statusText: request.statusText,
+          });
+        }
+      }
+      request.onerror = () => {
+        reject({
+          status: request.status,
+          statusText: request.statusText,
+        });
+      };
+      request.open('GET', uri, true);
+      request.send();
+    })
+  }
+
   function requestApiData(api, onGetRequestData) {
     const request = new XMLHttpRequest();
 
@@ -24,15 +48,24 @@ export default function App() {
   }
 
   function openPerfil() {
-    requestApiData(perfilApi, (data) => {
+    /*requestApiData(perfilApi, (data) => {
       const new_d = { avatar_url: data.avatar_url, name: data.name, bio: data.bio };
       setUserData(new_d);
-    })
+    })*/
+    requestApiDataPromise(perfilApi).then((data) => {
+      console.log(data);
+      const json_object = JSON.parse(data);
+      const new_d = { avatar_url: json_object.avatar_url, name: json_object.name, bio: json_object.bio };
+      console.log(new_d);
+      if(new_d.name != userData.name){
+          setUserData(new_d);
+      }
+    });
   }
 
   useEffect(() => {
-    openPerfil();  
-  });
+    openPerfil();
+  }, [userData]);
 
   /*if (!userData.name) {
     return (
@@ -41,17 +74,18 @@ export default function App() {
       </View>
     );
   } else {*/
-    return (
-      < View style={styles.container} >
-        <View style={styles.Center}>
-          <Image style={styles.AvatarImg} source={{ uri: userData.avatar_url }} />
-          <Text key={userData.name} style={styles.Name}> {userData.name} </Text>
-          <Text style={styles.Bio}> {userData.bio} </Text>
-        </View>
-        <View style={styles.container}>
-        </View>
-      </View >
-    );
+  return (
+    < View style={styles.container} >
+      <View style={styles.Center}>
+        <Image style={styles.AvatarImg} source={{ uri: userData.avatar_url }} />
+        <Text key={userData.name} style={styles.Name}> {userData.name} </Text>
+        <Text style={styles.Bio}> {userData.bio} </Text>
+      </View>
+      <View style={styles.container}>
+          <Button title="Open perfil" onPress={openPerfil} color="#ee9b00"></Button>
+      </View>
+    </View >
+  );
   //}
 }
 
