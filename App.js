@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, FlatList } from 'react-native-web';
-import { Image } from 'react-native'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import { Button } from 'react-native-web';
 
 const perfilApi = `https://api.github.com/users/RuanLucasGD`;
 const repoApi = `https://api.github.com/users/RuanLucasGD/repos`;
 
+var repoData = []
+var userData = []
+
 export default function App() {
-  const [userData, setUserData] = useState({ avatar_url: '', name: '', bio: '' })
+
+  const [userDataReceived, setUserDataReceived] = useState(false)
+  const [repoDataReceived, setRepoDataReceived] = useState(false)
 
   function requestApiDataPromise(uri) {
+
     return new Promise(function (resolve, reject) {
       const request = new XMLHttpRequest();
       request.onload = () => {
@@ -34,59 +38,74 @@ export default function App() {
     })
   }
 
-  function requestApiData(api, onGetRequestData) {
-    const request = new XMLHttpRequest();
+  function openPerfil() {
 
-    request.onload = () => {
-      const data = JSON.parse(request.response);
-      if (onGetRequestData) {
-        onGetRequestData(data);
-      }
-    }
-    request.open('GET', api, true);
-    request.send();
+    requestApiDataPromise(perfilApi).then((data) => {
+      userData = JSON.parse(data);
+      setUserDataReceived(true)
+    });
   }
 
-  function openPerfil() {
-    /*requestApiData(perfilApi, (data) => {
-      const new_d = { avatar_url: data.avatar_url, name: data.name, bio: data.bio };
-      setUserData(new_d);
-    })*/
-    requestApiDataPromise(perfilApi).then((data) => {
-      console.log(data);
-      const json_object = JSON.parse(data);
-      const new_d = { avatar_url: json_object.avatar_url, name: json_object.name, bio: json_object.bio };
-      console.log(new_d);
-      if(new_d.name != userData.name){
-          setUserData(new_d);
-      }
-    });
+  function openRepo() {
+
+    requestApiDataPromise(repoApi).then((data) => {
+      repoData = JSON.parse(data);
+      setRepoDataReceived(true)
+    })
   }
 
   useEffect(() => {
     openPerfil();
-  }, [userData]);
+    openRepo();
+  }); 4
 
-  /*if (!userData.name) {
-    return (
-      <View style={styles.container}>
-        <Button title="Open perfil" onPress={openPerfil} color="#ee9b00"></Button>
+  if (repoDataReceived) {
+    console.log(repoData)
+  }
+
+  if (userDataReceived) {
+    console.log(userData)
+  }
+
+  const repoList = [];
+
+  function formatRepoName(repoName) {
+
+    var newName = repoName;
+    newName = newName.toUpperCase();
+    return newName;
+  }
+
+  for (let r of repoData) {
+
+    repoList.push(
+      <View style={styles.RepoBox}>
+        <View style={styles.FieldsStyle}>
+          <Text style={styles.RepoName}>{formatRepoName(r.name)}</Text>
+          <View style={{ height: 2, backgroundColor: "#dee2e6", paddingLeft: 50 }}></View>
+          <View style={{ paddingVertical: 10 }}>
+            <Text style={styles.NormalText}>{r.visibility}</Text>
+            <Text style={styles.BoldText}>{r.fork ? "fork: true" : "fork: false"}</Text>
+            <Button key={"Press"} style={{height:10000}}></Button>
+          </View>
+        </View>
       </View>
-    );
-  } else {*/
+    )
+  }
+
   return (
     < View style={styles.container} >
       <View style={styles.Center}>
-        <Image style={styles.AvatarImg} source={{ uri: userData.avatar_url }} />
-        <Text key={userData.name} style={styles.Name}> {userData.name} </Text>
-        <Text style={styles.Bio}> {userData.bio} </Text>
-      </View>
-      <View style={styles.container}>
-          <Button title="Open perfil" onPress={openPerfil} color="#ee9b00"></Button>
+        <View style={styles.Box}>
+          <Image style={styles.AvatarImg} source={{ uri: userData.avatar_url }} />
+          <Text key={userData.name} style={styles.Name}> {userData.name} </Text>
+          <Text style={styles.Bio}> {userData.bio} </Text>
+          <Text style={styles.Bio}> Followers {userData.followers} </Text>
+        </View>
+        <ul>{repoList}</ul>
       </View>
     </View >
   );
-  //}
 }
 
 const styles = StyleSheet.create({
@@ -95,37 +114,89 @@ const styles = StyleSheet.create({
     padding: '5%',
     display: 'flex',
     flex: 1,
-    backgroundColor: '#0c1e2b',
+    backgroundColor: '#212529',
     alignItems: 'center'
+  },
+  FieldsStyle: {
+    backgroundColor: "#343a40",
+    margin: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 5,
+    borderColor: "#caf0f8",
   },
   AvatarImg: {
     paddingBottom: 100,
     width: 200,
     height: 200,
-    borderRadius: 200 / 2
+    borderRadius: 200 / 2,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    display: 'flex',
+    alignItems: 'center'
   },
   Name: {
     fontSize: 50,
     color: "#fff",
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    display: 'flex',
+    alignItems: 'center'
   },
   Bio: {
     fontSize: 20,
     color: "#fff",
-    fontStyle: 'italic'
+    fontStyle: 'italic',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  RepoName: {
+    fontSize: 15,
+    color: "#fff",
+    fontWeight: 'bold',
+    textAlign: 'left'
+  },
+  NormalText: {
+    fontSize: 15,
+    color: "#ced4da",
+    textAlign: 'left'
+  },
+  ItalicText: {
+    fontSize: 15,
+    color: "#ced4da",
+    fontStyle: "italic",
+    textAlign: 'left'
+  },
+  BoldText: {
+    fontSize: 15,
+    color: "#ced4da",
+    fontWeight: "bold",
+    textAlign: 'left'
   },
   Button: {
-    heiht: 50,
+    heiht: 500,
     width: 200,
     justifyContent: 'center',
     display: 'flex',
     alignContent: 'center',
-    margin: 20
+    margin: 20,
+    backgroundColor: "#343a40"
+  },
+  ButtonFont: {
+    fontSize: 20
   },
   Center: {
     alignSelf: 'center',
     justifyContent: 'center',
     display: 'flex',
     alignItems: 'center'
+  },
+  RepoBox: {
+    justifyContent: 'center',
+    display: 'flex',
+    alignContent: 'center',
   }
 });
